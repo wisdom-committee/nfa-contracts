@@ -1,10 +1,10 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const MyNFT = await ethers.getContractFactory("MyNFT");
-  const myNFT = await MyNFT.deploy();
-  await myNFT.deployed();
-  console.log("MyNFT deployed to:", myNFT.address);
+  const Figurita = await ethers.getContractFactory("Figurita");
+  const figurita = await Figurita.deploy();
+  await figurita.deployed();
+  console.log("Figurita deployed to:", figurita.address);
 }
 
 main()

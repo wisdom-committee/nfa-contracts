@@ -7,12 +7,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "hardhat/console.sol";
 
-contract MyNFT is ERC721URIStorage, Ownable {
+contract Figurita is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    constructor() ERC721("MyNFT", "NFT") {
-        console.log("Deploying MyNFT.sol...");
+    constructor() ERC721("Figurita", "FIGU") {
+        console.log("Deploying Figurita.sol...");
     }
 
     function mintNFT(address recipient, string memory tokenURI)

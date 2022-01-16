@@ -1,0 +1,19 @@
+{
+    "attributes": [
+        {
+            "trait_type": "Album",
+            "value": "Personajes argentinos"
+        },
+        {
+            "trait_type": "Album position",
+            "value": "1"
+        },
+        {
+            "trait_type": "Rarity",
+            "value": "Epic"
+        }
+    ],
+    "description": "Basta chicos",
+    "image": "https://gateway.pinata.cloud/ipfs/QmTHTjcSkexPDX8n1txAk5y8vrqGgsMcdVEXT4vsDsPBoC",
+    "name": "Ricardo"
+}
