@@ -15,3 +15,15 @@ echo 'PRIVATE_KEY=xxx' >> .env
 ```
 npx hardhat --network ropsten run scripts/deploy.ts
 ```
+
+## Play around
+
+Mint figurita
+```
+node scripts/mint-nft.js
+```
+
+Read figurita
+```
+node scripts/read-nft.js
+```
