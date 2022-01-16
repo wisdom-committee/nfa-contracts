@@ -10,6 +10,12 @@ echo 'ROPSTEN_URL=xxx' >> .env
 echo 'PRIVATE_KEY=xxx' >> .env
 ```
 
+## Compile (generate ABI)
+
+```
+npx hardhat compile
+```
+
 ## Deploy
 
 ```
