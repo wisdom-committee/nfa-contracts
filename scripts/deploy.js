@@ -14,16 +14,16 @@ async function main() {
   await contract.deployed();
   console.log("Contract deployed to:", contract.address);
 
-  // Smoke tests: mint stickers, retrieve stickers, read stickers metadata
+  // Smoke tests: get album size, mint stickers, retrieve stickers, read stickers metadata
+  console.log("Album size:", await contract.getAlbumSize());
+
   let txn = await contract.mintStickers(5, { value: utils.parseEther('0.05') });
   await txn.wait()
 
-  let tokens = await contract.getStickers(owner.address)
-  console.log("Owner has tokens: ", tokens);
+  console.log("Owner has tokens: ", await contract.getStickers(owner.address));
 
   for (let i = 0; i < 5; i++) {
-    let uri = await contract.tokenURI(i);
-    console.log("Sticker", i, "has URI:", uri);
+    console.log("Sticker", i, "has URI:", await contract.tokenURI(i));
   }
 }
 

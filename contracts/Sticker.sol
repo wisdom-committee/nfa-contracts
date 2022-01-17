@@ -69,7 +69,7 @@ contract Sticker is ERC721Enumerable, Ownable {
 
     function _mintSticker() private {
         uint256 newTokenID = _tokenIds.current();
-        _positions[newTokenID] = uint256(keccak256(abi.encodePacked(msg.sender, newTokenID))) % _albumSize;
+        _positions[newTokenID] = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, newTokenID))) % _albumSize;
         _safeMint(msg.sender, newTokenID);
         _tokenIds.increment();
     }
