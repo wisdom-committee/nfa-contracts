@@ -17,7 +17,7 @@ async function main() {
 
   // Deploy
   const [owner] = await hre.ethers.getSigners();
-  const contractFactory = await hre.ethers.getContractFactory("Sticker");
+  const contractFactory = await hre.ethers.getContractFactory("NonFungibleAlbum");
   const contract = await contractFactory.deploy(name, symbol, baseStickerURI, albumURI, albumSize);
   await contract.deployed();
   console.log("Contract deployed to:", contract.address);

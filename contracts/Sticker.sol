@@ -7,15 +7,14 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract Sticker is ERC721Enumerable, Ownable {
+contract NonFungibleAlbum is ERC721Enumerable, Ownable {
     using SafeMath for uint256;
     using Counters for Counters.Counter;
     using Strings for uint256;
 
     Counters.Counter private _tokenIds;
     uint256 private _albumSize;
-    mapping(uint256 => uint256) private _positions; // sticker (tokenId) => position in the album
-    mapping(uint256 => address) private _albums; // album (tokenId) => owner
+    mapping(uint256 => uint256) private _positions; // tokenId => position in the album
 
     string public baseStickerURI;
     string public albumURI;
@@ -24,7 +23,7 @@ contract Sticker is ERC721Enumerable, Ownable {
     uint256 public constant PRICE = 0.001 ether; // price to mint a sticker
     uint256 public constant ALBUM_PRICE = 0.01 ether; // price to mint an album
     uint256 public constant MAX_PER_MINT = 5; // max amount of stickers that can be minted in a single transaction
-    uint256 private constant ALBUM_CODE = 99999; // special placeholder in _positions that represents an album
+    uint256 private constant ALBUM_CODE = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff; // special placeholder in _positions that represents an album
 
     constructor(string memory _name, string memory _symbol, string memory _baseStickerURI, string memory _albumURI, uint256 _size) 
     ERC721(_name, _symbol) {
@@ -53,12 +52,12 @@ contract Sticker is ERC721Enumerable, Ownable {
         _testMintSticker(_position);
     }
 
+    // TODO: burn all stickers
     function mintAlbum() public payable {
         require(_hasFullAlbum(msg.sender), "Album is not full");
         require(msg.value >= ALBUM_PRICE, "Not enough ETH");
 
         uint256 id = _mintNFT();
-        _albums[id] = msg.sender;
         _positions[id] = ALBUM_CODE;
     }
 
