@@ -1,7 +1,11 @@
 const { utils } = require("ethers");
 
 async function main() {
-  const baseTokenURI = "ipfs://QmQ3YTW4NfRc8trvpBsP4NiDZ6s6jPiZaWBnuzQTg6hYru/";
+  // Ardillas test
+  // const baseTokenURI = "ipfs://QmQ3YTW4NfRc8trvpBsP4NiDZ6s6jPiZaWBnuzQTg6hYru/";
+
+  // Bored apes
+  const baseTokenURI = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/";
 
   // Get owner/deployer's wallet address
   const [owner] = await hre.ethers.getSigners();
@@ -10,7 +14,7 @@ async function main() {
   const contractFactory = await hre.ethers.getContractFactory("Sticker");
 
   // Deploy contract with the correct constructor arguments
-  const contract = await contractFactory.deploy(baseTokenURI);
+  const contract = await contractFactory.deploy(baseTokenURI, 100);
 
   // Wait for this transaction to be mined
   await contract.deployed();

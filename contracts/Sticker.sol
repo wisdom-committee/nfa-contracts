@@ -16,21 +16,24 @@ contract Sticker is ERC721Enumerable, Ownable {
 
     // Mapping from sticker (tokenId) to its position in the album
     mapping(uint256 => uint256) private _positions;
+    uint256 private _albumSize;
 
     uint256 public constant MAX_SUPPLY = 1000;
     uint256 public constant PRICE = 0.001 ether;
     uint256 public constant MAX_PER_MINT = 10;
-    uint256 public constant ALBUM_SIZE = 8;
     uint256 public constant MAGIC_NUMBER = 99;
 
     string public baseTokenURI;
 
-    constructor(string memory baseURI) ERC721("Sticker", "FIGU") {
+    constructor(string memory baseURI, uint256 albumSize)
+        ERC721("Sticker", "FIGU")
+    {
         baseTokenURI = baseURI;
+        _albumSize = albumSize;
     }
 
-    function _baseURI() internal view virtual override returns (string memory) {
-        return baseTokenURI;
+    function getAlbumSize() public view returns (uint256) {
+        return _albumSize;
     }
 
     function mintStickers(uint256 _count) public payable {
@@ -49,13 +52,6 @@ contract Sticker is ERC721Enumerable, Ownable {
         for (uint256 i = 0; i < _count; i++) {
             _mintSingleNFT();
         }
-    }
-
-    function _mintSingleNFT() private {
-        uint256 newTokenID = _tokenIds.current();
-        _positions[newTokenID] = uint256(keccak256(abi.encodePacked(block.timestamp,block.difficulty,msg.sender,newTokenID))) % ALBUM_SIZE;
-        _safeMint(msg.sender, newTokenID);
-        _tokenIds.increment();
     }
 
     function getStickers(address _owner)
@@ -80,10 +76,46 @@ contract Sticker is ERC721Enumerable, Ownable {
         require(success, "Transfer failed.");
     }
 
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        require(
+            _exists(tokenId),
+            "ERC721Metadata: URI query for nonexistent token"
+        );
 
         string memory baseURI = _baseURI();
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, _positions[tokenId].toString())) : "";
+        return
+            bytes(baseURI).length > 0
+                ? string(
+                    abi.encodePacked(baseURI, _positions[tokenId].toString())
+                )
+                : "";
+    }
+
+    function _mintSingleNFT() private {
+        uint256 newTokenID = _tokenIds.current();
+        _positions[newTokenID] =
+            uint256(
+                keccak256(
+                    abi.encodePacked(
+                        block.timestamp,
+                        block.difficulty,
+                        msg.sender,
+                        newTokenID
+                    )
+                )
+            ) %
+            _albumSize;
+        _safeMint(msg.sender, newTokenID);
+        _tokenIds.increment();
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return baseTokenURI;
     }
 }
