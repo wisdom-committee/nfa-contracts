@@ -22,15 +22,3 @@ Deploy
 ```
 npx hardhat --network ropsten run scripts/deploy.ts
 ```
-
-## Play around
-
-Mint stickers
-```
-node scripts/mint-nft.js
-```
-
-Read sticker
-```
-node scripts/read-nft.js
-```
