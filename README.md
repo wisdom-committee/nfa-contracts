@@ -2,7 +2,15 @@
 
 This project is managed with [Hardhat](https://hardhat.org/)
 
-## Setup
+## Compile (generate ABI)
+
+```
+npx hardhat compile
+```
+
+Check `./artifacts/contracts/...`
+
+## Deploy
 
 Fill environment variables
 ```bash
@@ -10,21 +18,14 @@ echo 'ROPSTEN_URL=xxx' >> .env
 echo 'PRIVATE_KEY=xxx' >> .env
 ```
 
-## Compile (generate ABI)
-
-```
-npx hardhat compile
-```
-
-## Deploy
-
+Deploy
 ```
 npx hardhat --network ropsten run scripts/deploy.ts
 ```
 
 ## Play around
 
-Mint figurita
+Mint figuritas
 ```
 node scripts/mint-nft.js
 ```

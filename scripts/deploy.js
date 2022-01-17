@@ -19,13 +19,18 @@ async function main() {
   console.log("Contract deployed to:", contract.address);
 
   // Mint 3 NFTs by sending 0.03 ether
-  //let txn = await contract.mintFiguritas(10, { value: utils.parseEther('0.01') });
-  //await txn.wait()
+  let txn = await contract.mintFiguritas(10, { value: utils.parseEther('0.01') });
+  await txn.wait()
 
   // Get all token IDs of the owner
-  //let tokens = await contract.getFiguritas(owner.address)
-  //console.log("Owner has tokens: ", tokens);
+  let tokens = await contract.getFiguritas(owner.address)
+  console.log("Owner has tokens: ", tokens);
 
+  // Get tokenURI for figurita 9
+  for (let i = 0; i < 10; i++) {
+    let uri = await contract.tokenURI(i);
+    console.log("Figurita", i, "has URI:", uri);
+  }
 }
 
 main()
