@@ -10,7 +10,7 @@ npx hardhat compile
 
 Check `./artifacts/contracts/...`
 
-## Deploy
+## Deploy (Ropsten)
 
 Fill environment variables
 ```bash
@@ -21,4 +21,12 @@ echo 'PRIVATE_KEY=xxx' >> .env
 Deploy
 ```
 npx hardhat --network ropsten run scripts/deploy.ts
+```
+
+Contract address will be printed in stdout
+
+## Deploy (local)
+
+```
+npx hardhat run scripts/deploy.ts
 ```
