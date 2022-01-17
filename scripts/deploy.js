@@ -7,7 +7,7 @@ async function main() {
   const [owner] = await hre.ethers.getSigners();
 
   // Get contract that we want to deploy
-  const contractFactory = await hre.ethers.getContractFactory("Figurita");
+  const contractFactory = await hre.ethers.getContractFactory("Sticker");
 
   // Deploy contract with the correct constructor arguments
   const contract = await contractFactory.deploy(baseTokenURI);
@@ -19,17 +19,17 @@ async function main() {
   console.log("Contract deployed to:", contract.address);
 
   // Mint 3 NFTs by sending 0.03 ether
-  let txn = await contract.mintFiguritas(10, { value: utils.parseEther('0.01') });
+  let txn = await contract.mintStickers(10, { value: utils.parseEther('0.01') });
   await txn.wait()
 
   // Get all token IDs of the owner
-  let tokens = await contract.getFiguritas(owner.address)
+  let tokens = await contract.getStickers(owner.address)
   console.log("Owner has tokens: ", tokens);
 
-  // Get tokenURI for figurita 9
+  // Get tokenURI for sticker 9
   for (let i = 0; i < 10; i++) {
     let uri = await contract.tokenURI(i);
-    console.log("Figurita", i, "has URI:", uri);
+    console.log("Sticker", i, "has URI:", uri);
   }
 }
 

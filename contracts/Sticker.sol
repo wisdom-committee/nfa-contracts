@@ -7,14 +7,14 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract Figurita is ERC721Enumerable, Ownable {
+contract Sticker is ERC721Enumerable, Ownable {
     using SafeMath for uint256;
     using Counters for Counters.Counter;
     using Strings for uint256;
 
     Counters.Counter private _tokenIds;
 
-    // Mapping from figurita (tokenId) to its position in the album
+    // Mapping from sticker (tokenId) to its position in the album
     mapping(uint256 => uint256) private _positions;
 
     uint256 public constant MAX_SUPPLY = 1000;
@@ -25,7 +25,7 @@ contract Figurita is ERC721Enumerable, Ownable {
 
     string public baseTokenURI;
 
-    constructor(string memory baseURI) ERC721("Figurita", "FIGU") {
+    constructor(string memory baseURI) ERC721("Sticker", "FIGU") {
         baseTokenURI = baseURI;
     }
 
@@ -33,7 +33,7 @@ contract Figurita is ERC721Enumerable, Ownable {
         return baseTokenURI;
     }
 
-    function mintFiguritas(uint256 _count) public payable {
+    function mintStickers(uint256 _count) public payable {
         uint256 totalMinted = _tokenIds.current();
 
         require(totalMinted.add(_count) <= MAX_SUPPLY, "Not enough NFTs left!");
@@ -58,7 +58,7 @@ contract Figurita is ERC721Enumerable, Ownable {
         _tokenIds.increment();
     }
 
-    function getFiguritas(address _owner)
+    function getStickers(address _owner)
         external
         view
         returns (uint256[] memory)

@@ -25,12 +25,12 @@ npx hardhat --network ropsten run scripts/deploy.ts
 
 ## Play around
 
-Mint figuritas
+Mint stickers
 ```
 node scripts/mint-nft.js
 ```
 
-Read figurita
+Read sticker
 ```
 node scripts/read-nft.js
 ```
