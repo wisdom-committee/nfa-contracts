@@ -1,37 +1,27 @@
 const { utils } = require("ethers");
 
 async function main() {
-  // Ardillas test
-  // const baseTokenURI = "ipfs://QmQ3YTW4NfRc8trvpBsP4NiDZ6s6jPiZaWBnuzQTg6hYru/";
-
-  // Bored apes
+  // Config: Bored apes stickers
   const baseTokenURI = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/";
+  const name = "Bored Apes Stickers"
+  const symbol = "APE"
+  const albumSize = 100
 
-  // Get owner/deployer's wallet address
+  // Deploy
   const [owner] = await hre.ethers.getSigners();
-
-  // Get contract that we want to deploy
   const contractFactory = await hre.ethers.getContractFactory("Sticker");
-
-  // Deploy contract with the correct constructor arguments
-  const contract = await contractFactory.deploy(baseTokenURI, 100);
-
-  // Wait for this transaction to be mined
+  const contract = await contractFactory.deploy(name, symbol, baseTokenURI, albumSize);
   await contract.deployed();
-
-  // Get contract address
   console.log("Contract deployed to:", contract.address);
 
-  // Mint 3 NFTs by sending 0.03 ether
-  let txn = await contract.mintStickers(10, { value: utils.parseEther('0.01') });
+  // Smoke tests: mint stickers, retrieve stickers, read stickers metadata
+  let txn = await contract.mintStickers(5, { value: utils.parseEther('0.05') });
   await txn.wait()
 
-  // Get all token IDs of the owner
   let tokens = await contract.getStickers(owner.address)
   console.log("Owner has tokens: ", tokens);
 
-  // Get tokenURI for sticker 9
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 5; i++) {
     let uri = await contract.tokenURI(i);
     console.log("Sticker", i, "has URI:", uri);
   }
