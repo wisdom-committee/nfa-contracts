@@ -64,13 +64,12 @@ contract Sticker is ERC721Enumerable, Ownable {
         uint256 balance = address(this).balance;
         require(balance > 0, "No ether left to withdraw");
 
-        (bool success, ) = (msg.sender).call{value: balance}("");
-        require(success, "Transfer failed");
+        payable(msg.sender).transfer(balance);
     }
 
     function _mintSticker() private {
         uint256 newTokenID = _tokenIds.current();
-        _positions[newTokenID] = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, newTokenID))) % _albumSize;
+        _positions[newTokenID] = uint256(keccak256(abi.encodePacked(msg.sender, newTokenID))) % _albumSize;
         _safeMint(msg.sender, newTokenID);
         _tokenIds.increment();
     }
