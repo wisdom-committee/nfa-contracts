@@ -22,7 +22,7 @@ contract Sticker is ERC721Enumerable, Ownable {
 
     uint256 public constant MAX_SUPPLY = 1000; // max amount of stickers that will be ever emmited
     uint256 public constant PRICE = 0.001 ether; // price to mint a sticker
-    uint256 public constant ALBUM_PRICE = 0.1 ether; // price to mint an album
+    uint256 public constant ALBUM_PRICE = 0.01 ether; // price to mint an album
     uint256 public constant MAX_PER_MINT = 5; // max amount of stickers that can be minted in a single transaction
     uint256 private constant ALBUM_CODE = 99999; // special placeholder in _positions that represents an album
 
@@ -46,6 +46,11 @@ contract Sticker is ERC721Enumerable, Ownable {
         for (uint256 i = 0; i < _count; i++) {
             _mintSticker();
         }
+    }
+
+    // TODO: for test purposes, remove later
+    function testMintSticker(uint256 _position) public payable {
+        _testMintSticker(_position);
     }
 
     function mintAlbum() public payable {
@@ -90,6 +95,11 @@ contract Sticker is ERC721Enumerable, Ownable {
     function _mintSticker() private {
         uint256 id = _mintNFT();
         _positions[id] = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, id))) % _albumSize;
+    }
+
+    function _testMintSticker(uint256 _position) private {
+        uint256 id = _mintNFT();
+        _positions[id] = _position;
     }
 
     function _mintNFT() private returns (uint256) {
