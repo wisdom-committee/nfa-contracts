@@ -14,13 +14,17 @@ contract Sticker is ERC721Enumerable, Ownable {
 
     Counters.Counter private _tokenIds;
     uint256 private _albumSize;
-    mapping(uint256 => uint256) private _positions; // Sticker (tokenId) => position in the album
+    mapping(uint256 => uint256) private _positions; // sticker (tokenId) => position in the album
+    mapping(uint256 => address) private _albums; // album (tokenId) => owner
+
 
     string public baseTokenURI;
 
-    uint256 public constant MAX_SUPPLY = 1000;
-    uint256 public constant PRICE = 0.001 ether;
-    uint256 public constant MAX_PER_MINT = 5;
+    uint256 public constant MAX_SUPPLY = 1000; // max amount of stickers that will be ever emmited
+    uint256 public constant PRICE = 0.001 ether; // price to mint a sticker
+    uint256 public constant ALBUM_PRICE = 0.1 ether; // price to mint an album
+    uint256 public constant MAX_PER_MINT = 5; // max amount of stickers that can be minted in a single transaction
+    uint256 private constant ALBUM_CODE = 99999; // special placeholder in _positions that represents an album
 
     constructor(string memory _name, string memory _symbol, string memory _baseTokenURI, uint256 _size) 
     ERC721(_name, _symbol) {
@@ -43,7 +47,16 @@ contract Sticker is ERC721Enumerable, Ownable {
         }
     }
 
-    function getStickers(address _owner) external view returns (uint256[] memory) {
+    function mintAlbum() public payable {
+        require(_hasFullAlbum(msg.sender), "Album is not full");
+        require(msg.value >= ALBUM_PRICE, "Not enough ETH");
+
+        uint256 id = _mintNFT();
+        _albums[id] = msg.sender;
+        _positions[id] = ALBUM_CODE;
+    }
+
+    function getStickers(address _owner) public view returns (uint256[] memory) {
         uint256 tokenCount = balanceOf(_owner);
         uint256[] memory tokensId = new uint256[](tokenCount);
 
@@ -56,8 +69,15 @@ contract Sticker is ERC721Enumerable, Ownable {
     function tokenURI(uint256 _tokenId) public view virtual override returns (string memory) {
         require(_exists(_tokenId), "Invalid Token ID");
 
-        string memory baseURI = _baseURI();
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, _positions[_tokenId].toString())) : "";
+        uint256 position = _positions[_tokenId];
+        if (position != ALBUM_CODE) { // it's a sticker
+            string memory baseURI = _baseURI();
+            return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, position.toString())) : "";
+        }
+
+        // it's an album
+        
+        
     }
 
     function withdraw() public payable onlyOwner {
@@ -68,13 +88,35 @@ contract Sticker is ERC721Enumerable, Ownable {
     }
 
     function _mintSticker() private {
+        uint256 id = _mintNFT();
+        _positions[id] = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, id))) % _albumSize;
+    }
+
+    function _mintNFT() private returns (uint256) {
         uint256 newTokenID = _tokenIds.current();
-        _positions[newTokenID] = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, newTokenID))) % _albumSize;
         _safeMint(msg.sender, newTokenID);
         _tokenIds.increment();
+        return newTokenID;
+    }
+
+    function _hasFullAlbum(address _address) private view returns (bool) {
+        uint256[] memory stickers = this.getStickers(_address);
+        bool[] memory late = new bool[](_albumSize);
+
+        for (uint256 i = 0; i < stickers.length; i++) {
+            late[_positions[stickers[i]]] = true;
+        }
+
+        for (uint256 i = 0; i < late.length; i++) {
+            if (late[i] == false) return false;
+        }
+
+        return true;
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseTokenURI;
     }
+
+    
 }
