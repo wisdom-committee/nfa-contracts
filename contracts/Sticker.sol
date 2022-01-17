@@ -17,8 +17,8 @@ contract Sticker is ERC721Enumerable, Ownable {
     mapping(uint256 => uint256) private _positions; // sticker (tokenId) => position in the album
     mapping(uint256 => address) private _albums; // album (tokenId) => owner
 
-
-    string public baseTokenURI;
+    string public baseStickerURI;
+    string public albumURI;
 
     uint256 public constant MAX_SUPPLY = 1000; // max amount of stickers that will be ever emmited
     uint256 public constant PRICE = 0.001 ether; // price to mint a sticker
@@ -26,9 +26,10 @@ contract Sticker is ERC721Enumerable, Ownable {
     uint256 public constant MAX_PER_MINT = 5; // max amount of stickers that can be minted in a single transaction
     uint256 private constant ALBUM_CODE = 99999; // special placeholder in _positions that represents an album
 
-    constructor(string memory _name, string memory _symbol, string memory _baseTokenURI, uint256 _size) 
+    constructor(string memory _name, string memory _symbol, string memory _baseStickerURI, string memory _albumURI, uint256 _size) 
     ERC721(_name, _symbol) {
-        baseTokenURI = _baseTokenURI;
+        baseStickerURI = _baseStickerURI;
+        albumURI = _albumURI;
         _albumSize = _size;
     }
 
@@ -76,8 +77,7 @@ contract Sticker is ERC721Enumerable, Ownable {
         }
 
         // it's an album
-        
-        
+        return albumURI;
     }
 
     function withdraw() public payable onlyOwner {
@@ -115,8 +115,6 @@ contract Sticker is ERC721Enumerable, Ownable {
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
-        return baseTokenURI;
+        return baseStickerURI;
     }
-
-    
 }

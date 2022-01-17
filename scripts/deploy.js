@@ -2,7 +2,8 @@ const { utils } = require("ethers");
 
 async function main() {
   // Config: Bored apes stickers
-  const baseTokenURI = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/";
+  const baseStickerURI = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/";
+  const albumURI = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/99999"
   const name = "Bored Apes Stickers"
   const symbol = "APE"
   const albumSize = 100
@@ -10,7 +11,7 @@ async function main() {
   // Deploy
   const [owner] = await hre.ethers.getSigners();
   const contractFactory = await hre.ethers.getContractFactory("Sticker");
-  const contract = await contractFactory.deploy(name, symbol, baseTokenURI, albumSize);
+  const contract = await contractFactory.deploy(name, symbol, baseStickerURI, albumURI, albumSize);
   await contract.deployed();
   console.log("Contract deployed to:", contract.address);
 
