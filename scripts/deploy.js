@@ -30,8 +30,10 @@ async function smokeTests(contract, owner) {
   const albumSize = await contract.getAlbumSize();
   console.log("Album size:", albumSize);
 
-  let txn = await contract.mintStickers(5, { value: utils.parseEther('0.05') });
-  await txn.wait()
+  console.log("Minting 5 stickers");
+  let txn = await contract.mintStickers(5, { value: utils.parseEther('0.005') });
+  let receipt = await txn.wait();
+  printGas(receipt);
 
   console.log("Owner has tokens: ", await contract.getStickers(owner.address));
 
@@ -42,7 +44,8 @@ async function smokeTests(contract, owner) {
   try {
     console.log("Trying to mint - not full - album (should fail)");
     let txn = await contract.mintAlbum({ value: utils.parseEther('0.01') });
-    await txn.wait()
+    receipt = await txn.wait()
+    printGas(receipt)
   } catch (error) {
     console.log("it failed!");
   };
@@ -55,5 +58,10 @@ async function smokeTests(contract, owner) {
 
   console.log("Trying to mint - full - album (should work)");
   txn = await contract.mintAlbum({ value: utils.parseEther('0.01') });
-  await txn.wait()
+  receipt = await txn.wait()
+  printGas(receipt)
+}
+
+function printGas(receipt) {
+  console.log('Ether spent on gas for txn:', utils.formatEther(receipt.cumulativeGasUsed.mul(receipt.effectiveGasPrice)))
 }
