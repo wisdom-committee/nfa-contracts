@@ -2,6 +2,17 @@
 
 This project is managed with [Hardhat](https://hardhat.org/)
 
+## Tests
+
+```
+npx hardhat test
+```
+
+To report gas:
+```
+REPORT_GASE=true npx hardhat test
+```
+
 ## Compile (generate ABI)
 
 ```
