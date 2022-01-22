@@ -14,7 +14,17 @@ describe("NonFungibleAlbum contract", function () {
         contract = await contractFactory.deploy(name, symbol, baseStickerURI, albumURI, albumSize);
     });
 
-    it("Gets album size", async function () {
-        expect(await contract.getAlbumSize()).to.equal(albumSize);
+    describe("Deployment", function () {
+
+        it("Sets the right owner", async function () {
+            expect(await contract.owner()).to.equal(owner.address);
+        });
+    });
+
+    describe("Album functions", function () {
+        
+        it("Gets album size", async function () {
+            expect(await contract.getAlbumSize()).to.equal(albumSize);
+        });
     });
 });
