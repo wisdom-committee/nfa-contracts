@@ -22,19 +22,20 @@ const config: HardhatUserConfig = {
   networks: {
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     mumbai: {
       url: process.env.MUMBAI_URL || "",
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
     coinmarketcap: process.env.COINMARKETCAP_APIKEY || "",
+    token: process.env.REPORT_GAS_NETWORK == "polygon" ? "MATIC" : "ETH",
+    gasPriceApi: process.env.REPORT_GAS_NETWORK == "polygon" ?
+      "https://api.polygonscan.com/api?module=proxy&action=eth_gasPrice" : "https://api.etherscan.io/api?module=proxy&action=eth_gasPrice",
   },
 };
 
