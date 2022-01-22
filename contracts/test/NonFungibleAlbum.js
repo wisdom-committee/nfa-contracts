@@ -18,33 +18,64 @@ describe("NonFungibleAlbum contract", async function () {
     describe("Deployment", async function () {
 
         it("Sets the right owner", async function () {
-            expect(await contract.owner()).to.be.equal(owner.address);
+            response = await contract.owner();
+            expect(response).to.be.equal(owner.address);
         });
     });
 
     describe("Functions", async function () {
 
         it("Gets album size", async function () {
-            expect(await contract.getAlbumSize()).to.be.equal(albumSize);
+            response = await contract.getAlbumSize();
+            expect(response).to.be.equal(albumSize);
         });
 
         it("Mints stickers", async function () {
-            txn = await contract.mintStickers(5, { value: utils.parseEther('0.005') });
-            expect(await txn.wait());
+            response = contract.mintStickers(5, { value: utils.parseEther('0.005') });
+            await expect(response).to.be.not.reverted;
         });
 
         it("Gets stickers", async function () {
-            txn = await contract.mintStickers(5, { value: utils.parseEther('0.005') });
-            receipt = await txn.wait();
+            await contract.mintStickers(5, { value: utils.parseEther('0.005') });
 
-            expect(await contract.getStickers(owner.address)).to.be.an('array').of.length(5);
+            response = await contract.getStickers(owner.address);
+            expect(response).to.be.an('array').of.length(5);
         });
 
         it("Gets sticker URI", async function () {
-            txn = await contract.mintStickers(1, { value: utils.parseEther('0.005') });
-            receipt = await txn.wait();
+            await contract.mintStickers(1, { value: utils.parseEther('0.005') });
 
-            expect(await contract.tokenURI(0)).to.contain(baseStickerURI);
+            response = await contract.tokenURI(0);
+            expect(response).to.contain(baseStickerURI);
+        });
+
+        describe("Minting albums", async function () {
+
+            it("Fails to mint album when not enough ETH is paid", async function () {
+                response = contract.mintAlbum({ value: utils.parseEther('0.009') });
+                e = "Not enough ETH";
+                await expect(response).to.be.revertedWith(e);
+            });
+
+            it("Fails to mint album when it's still not completed", async function () {
+                await contract.mintStickers(3, { value: utils.parseEther('0.005') });
+
+                response = contract.mintAlbum({ value: utils.parseEther('0.01') });
+                e = "Album is not full";
+                await expect(response).to.be.revertedWith(e);
+            });
+
+            it("Mints an album", async function () {
+                for (i = 0; i < albumSize; i++) {
+                    await contract.testMintSticker(i);
+                }
+
+                response = contract.mintAlbum({ value: utils.parseEther('0.01') });
+                await expect(response).to.be.not.reverted;
+
+                response = await contract.tokenURI(albumSize);
+                expect(response).to.be.equal(albumURI);
+            });
         });
     });
 });
