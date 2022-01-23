@@ -71,6 +71,7 @@ class App extends React.Component {
     try {
       await NonFungibleAlbumService.mintAlbum(accounts[0]);
       this.setState({ message: "You have minted the Album!" });
+      return this.reloadAlbum();
     } catch (e) {
       this.setState({ message: `Transaction fail or rejected. ${e ? 'Message: ' + e.toString() : ''}` });
     }

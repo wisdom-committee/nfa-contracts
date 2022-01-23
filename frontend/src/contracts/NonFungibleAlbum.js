@@ -1,6 +1,8 @@
 import web3 from '../web3';
 
-const address = '0x0aCf5780Fee6e4B31bE999311588C002f184B7eb';
+// Mumbai deploy currently in use
+const address = '0x668aCC38fBa268247b2cA4780BC624fB1eEc1b31';
+
 const abi = [
   {
     "inputs": [

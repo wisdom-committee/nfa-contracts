@@ -24,7 +24,15 @@ async function deploy() {
   const contractFactory = await hre.ethers.getContractFactory("NonFungibleAlbum");
   const contract = await contractFactory.deploy(album.name, album.size, album.uri, album.id);
   await contract.deployed();
-  console.log("Contract deployed to:", contract.address);
+
+  // This solves the bug in Mumbai network where the contract address is not the real one
+  // See https://github.com/nomiclabs/hardhat/issues/2162
+  const txHash = contract.deployTransaction.hash;
+  const txReceipt = await ethers.provider.waitForTransaction(txHash);
+  console.log("Contract address:", txReceipt.contractAddress);
+
+  // TODO: reenable this once previous bug is fixed
+  //console.log("Contract address:", contract.address);
   return { contract, owner };
 }
 
