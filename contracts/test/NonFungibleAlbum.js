@@ -56,7 +56,7 @@ describe("NonFungibleAlbum contract", async function () {
             it("Mints stickers", async function () {
                 await contract.mintStickers(5, { value: utils.parseEther('0.005') });
 
-                response = await contract.stickersBalance(owner.address);
+                response = await contract.stickerBalances(owner.address);
                 expect(response).to.be.an('array').of.length(albumSize);
                 expect(totalBalance(response)).to.be.equal(5);
             });
@@ -89,7 +89,7 @@ describe("NonFungibleAlbum contract", async function () {
                 response = await contract.albumBalance(owner.address);
                 expect(response).to.be.equal(1);
 
-                response = await contract.stickersBalance(owner.address);
+                response = await contract.stickerBalances(owner.address);
                 expect(response).to.be.an('array').of.length(albumSize);
                 expect(totalBalance(response)).to.be.equal(0);
             });
@@ -97,10 +97,10 @@ describe("NonFungibleAlbum contract", async function () {
     });
 });
 
-function totalBalance(stickersBalance) {
+function totalBalance(stickerBalances) {
     total = 0;
-    for (i = 0; i < stickersBalance.length; i++) {
-        total += parseInt(stickersBalance[i]);
+    for (i = 0; i < stickerBalances.length; i++) {
+        total += parseInt(stickerBalances[i]);
     }
 
     return total;

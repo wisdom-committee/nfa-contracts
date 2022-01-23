@@ -49,7 +49,7 @@ contract NonFungibleAlbum is Ownable {
         _iBalances[msg.sender][_id]++;
     }
 
-    function stickersBalance(address _owner) external view returns (uint256[] memory) {
+    function stickerBalances(address _owner) external view returns (uint256[] memory) {
         uint256[] memory ownedBalances = new uint256[](albumSize);
         for (uint256 i = 0; i < albumSize; i++) {
             ownedBalances[i] = _iBalances[_owner][i];
