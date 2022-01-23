@@ -9,7 +9,7 @@ describe("NonFungibleAlbum contract", async function () {
     const albumId = 99;
 
     beforeEach(async function () {
-        [owner] = await hre.ethers.getSigners();
+        [owner, addr1, addr2] = await hre.ethers.getSigners();
         contractFactory = await hre.ethers.getContractFactory("NonFungibleAlbum");
         contract = await contractFactory.deploy(name, size, uri, albumId);
     });
@@ -87,6 +87,41 @@ describe("NonFungibleAlbum contract", async function () {
                 response = await contract.stickerBalances(owner.address);
                 expect(response).to.be.an('array').of.length(size);
                 expect(totalBalance(response)).to.be.equal(0);
+            });
+        });
+
+        describe("Transfering", async function () {
+
+            it("Transfers a sticker", async function () {
+                await contract.testMintSticker(1);
+
+                response = contract.safeTransferFrom(owner.address, addr1.address, 1, 1, []);
+                await expect(response).to.be.not.reverted;
+
+                response = await contract.stickerBalances(owner.address);
+                expect(response).to.be.an('array').of.length(size);
+                expect(totalBalance(response)).to.be.equal(0);
+
+                response = await contract.stickerBalances(addr1.address);
+                expect(response).to.be.an('array').of.length(size);
+                expect(totalBalance(response)).to.be.equal(1);
+            });
+
+            it("Transfers stickers in batch", async function () {
+                await contract.testMintSticker(1);
+                await contract.testMintSticker(2);
+                await contract.testMintSticker(5);
+
+                response = contract.safeBatchTransferFrom(owner.address, addr1.address, [1, 2, 5], [1, 1, 1], []);
+                await expect(response).to.be.not.reverted;
+
+                response = await contract.stickerBalances(owner.address);
+                expect(response).to.be.an('array').of.length(size);
+                expect(totalBalance(response)).to.be.equal(0);
+
+                response = await contract.stickerBalances(addr1.address);
+                expect(response).to.be.an('array').of.length(size);
+                expect(totalBalance(response)).to.be.equal(3);
             });
         });
     });
