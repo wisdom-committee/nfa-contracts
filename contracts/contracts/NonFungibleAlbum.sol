@@ -3,18 +3,19 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 //TODO: use safemath
 contract NonFungibleAlbum is Ownable {
     using Strings for uint256;
 
     // id => (owner => balance)
-    mapping (uint256 => mapping(address => uint256)) private _balances;
+    mapping(uint256 => mapping(address => uint256)) private _balances;
 
     // owner => (id => balance)
-    mapping (address => mapping(uint256 => uint256)) private _iBalances;
+    mapping(address => mapping(uint256 => uint256)) private _iBalances;
 
-    mapping (address => uint256) _albumBalances;
+    mapping(address => uint256) _albumBalances;
 
     string public albumName;
     uint256 public albumSize;
@@ -24,8 +25,13 @@ contract NonFungibleAlbum is Ownable {
     uint256 public constant PRICE = 0.001 ether; // price to mint a sticker
     uint256 public constant ALBUM_PRICE = 0.01 ether; // price to mint an album
     uint256 public constant MAX_PER_MINT = 5; // max amount of stickers that can be minted in a single transaction
-    
-    constructor(string memory _albumName, uint256 _albumSize, string memory _baseStickerURI, string memory _albumURI) {
+
+    constructor(
+        string memory _albumName,
+        uint256 _albumSize,
+        string memory _baseStickerURI,
+        string memory _albumURI
+    ) {
         albumName = _albumName;
         albumSize = _albumSize;
         baseStickerURI = _baseStickerURI;
@@ -37,7 +43,9 @@ contract NonFungibleAlbum is Ownable {
         require(msg.value >= PRICE * _count, "Not enough ETH");
 
         for (uint256 i = 0; i < _count; i++) {
-            uint256 id = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, i))) % albumSize;
+            uint256 id = uint256(
+                keccak256(abi.encodePacked(block.timestamp, msg.sender, i))
+            ) % albumSize;
             _balances[id][msg.sender]++;
             _iBalances[msg.sender][id]++;
         }
@@ -49,7 +57,11 @@ contract NonFungibleAlbum is Ownable {
         _iBalances[msg.sender][_id]++;
     }
 
-    function stickerBalances(address _owner) external view returns (uint256[] memory) {
+    function stickerBalances(address _owner)
+        external
+        view
+        returns (uint256[] memory)
+    {
         uint256[] memory ownedBalances = new uint256[](albumSize);
         for (uint256 i = 0; i < albumSize; i++) {
             ownedBalances[i] = _iBalances[_owner][i];
@@ -58,13 +70,12 @@ contract NonFungibleAlbum is Ownable {
         return ownedBalances;
     }
 
-    // TODO: burn all stickers
     function mintAlbum() external payable {
         require(msg.value >= ALBUM_PRICE, "Not enough ETH");
 
         uint256 uniqueStickers;
         for (uint256 i = 0; i < albumSize; i++) {
-            if (_balances[i][msg.sender]>0){
+            if (_balances[i][msg.sender] > 0) {
                 uniqueStickers++;
             }
         }
@@ -75,7 +86,7 @@ contract NonFungibleAlbum is Ownable {
             _balances[i][msg.sender]--;
             _iBalances[msg.sender][i]--;
         }
-        
+
         // mint album
         _albumBalances[msg.sender]++;
     }
