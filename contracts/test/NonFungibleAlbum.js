@@ -5,14 +5,13 @@ describe("NonFungibleAlbum contract", async function () {
 
     const baseStickerURI = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/";
     const albumURI = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/99999";
-    const name = "Bored Apes Stickers";
-    const symbol = "APE";
+    const albumName = "Bored Apes Stickers";
     const albumSize = 10;
 
     beforeEach(async function () {
         [owner] = await hre.ethers.getSigners();
         contractFactory = await hre.ethers.getContractFactory("NonFungibleAlbum");
-        contract = await contractFactory.deploy(name, symbol, baseStickerURI, albumURI, albumSize);
+        contract = await contractFactory.deploy(albumName, albumSize, baseStickerURI, albumURI);
     });
 
     describe("Deployment", async function () {
@@ -26,27 +25,41 @@ describe("NonFungibleAlbum contract", async function () {
     describe("Functions", async function () {
 
         it("Gets album size", async function () {
-            response = await contract.getAlbumSize();
+            response = await contract.albumSize();
             expect(response).to.be.equal(albumSize);
         });
 
-        it("Mints stickers", async function () {
-            response = contract.mintStickers(5, { value: utils.parseEther('0.005') });
-            await expect(response).to.be.not.reverted;
-        });
-
-        it("Gets stickers", async function () {
-            await contract.mintStickers(5, { value: utils.parseEther('0.005') });
-
-            response = await contract.getStickers(owner.address);
-            expect(response).to.be.an('array').of.length(5);
-        });
-
         it("Gets sticker URI", async function () {
-            await contract.mintStickers(1, { value: utils.parseEther('0.005') });
-
-            response = await contract.tokenURI(0);
+            response = await contract.stickerURI(0);
             expect(response).to.contain(baseStickerURI);
+        });
+
+        it("Gets album URI", async function () {
+            response = await contract.albumURI();
+            expect(response).to.be.equal(albumURI);
+        });
+
+        describe("Minting stickers", async function () {
+
+            it("Fails to mint sticker when not enough ETH is paid", async function () {
+                response = contract.mintStickers(1, { value: utils.parseEther('0.0009') });
+                e = "Not enough ETH";
+                await expect(response).to.be.revertedWith(e);
+            });
+
+            it("Fails to mint stickers when amount exceeds limit", async function () {
+                response = contract.mintStickers(6, { value: utils.parseEther('0.006') });
+                e = "Invalid amount";
+                await expect(response).to.be.revertedWith(e);
+            });
+
+            it("Mints stickers", async function () {
+                await contract.mintStickers(5, { value: utils.parseEther('0.005') });
+
+                response = await contract.stickerBalances(owner.address);
+                expect(response).to.be.an('array').of.length(albumSize);
+                expect(totalBalance(response)).to.be.equal(5);
+            });
         });
 
         describe("Minting albums", async function () {
@@ -65,7 +78,7 @@ describe("NonFungibleAlbum contract", async function () {
                 await expect(response).to.be.revertedWith(e);
             });
 
-            it("Mints an album", async function () {
+            it("Mints an album, burning stickers", async function () {
                 for (i = 0; i < albumSize; i++) {
                     await contract.testMintSticker(i);
                 }
@@ -73,9 +86,22 @@ describe("NonFungibleAlbum contract", async function () {
                 response = contract.mintAlbum({ value: utils.parseEther('0.01') });
                 await expect(response).to.be.not.reverted;
 
-                response = await contract.tokenURI(albumSize);
-                expect(response).to.be.equal(albumURI);
+                response = await contract.albumBalance(owner.address);
+                expect(response).to.be.equal(1);
+
+                response = await contract.stickerBalances(owner.address);
+                expect(response).to.be.an('array').of.length(albumSize);
+                expect(totalBalance(response)).to.be.equal(0);
             });
         });
     });
 });
+
+function totalBalance(stickerBalances) {
+    total = 0;
+    for (i = 0; i < stickerBalances.length; i++) {
+        total += parseInt(stickerBalances[i]);
+    }
+
+    return total;
+}

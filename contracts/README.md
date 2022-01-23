@@ -2,7 +2,7 @@
 
 This project is managed with [Hardhat](https://hardhat.org/)
 
-## Tests
+## Run tests
 
 ```
 npx hardhat test
@@ -13,18 +13,36 @@ To report gas:
 REPORT_GASE=true npx hardhat test
 ```
 
-## Compile (generate ABI)
+To report gas in Polygon network:
+```
+REPORT_GAS=true REPORT_GAS_NETWORK=polygon npx hardhat test
+```
+
+(Optional) to see USD prices on gas reports:
+```
+echo 'COINMARKETCAP_APIKEY=xxx' >> .env
+```
+
+## Compile and generate ABI
 
 ```
 npx hardhat compile
 ```
 
-Check `./artifacts/contracts/...`
+ABI will be at `./artifacts/contracts/NonFungibleAlbum.sol/NonFungibleAlbum.json`
 
-## Deploy (Ropsten)
+## Deploy
+
+### Local
+
+```
+npx hardhat run scripts/deploy.ts
+```
+
+### Ethereum Ropsten
 
 Fill environment variables
-```bash
+```
 echo 'ROPSTEN_URL=xxx' >> .env
 echo 'PRIVATE_KEY=xxx' >> .env
 ```
@@ -34,10 +52,16 @@ Deploy
 npx hardhat --network ropsten run scripts/deploy.ts
 ```
 
-Contract address will be printed in stdout
+### Polygon Mumbai
 
-## Deploy (local)
+Fill environment variables
+```
+echo 'MUMBAI_URL=xxx' >> .env
+echo 'PRIVATE_KEY=xxx' >> .env
+```
 
+Deploy
 ```
-npx hardhat run scripts/deploy.ts
+npx hardhat --network mumbai run scripts/deploy.ts
 ```
+

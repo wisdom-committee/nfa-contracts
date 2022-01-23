@@ -1,77 +1,92 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract NonFungibleAlbum is ERC721Enumerable, Ownable {
-    using SafeMath for uint256;
-    using Counters for Counters.Counter;
+//TODO: use safemath
+contract NonFungibleAlbum is Ownable {
     using Strings for uint256;
 
-    Counters.Counter private _tokenIds;
-    uint256 private _albumSize;
-    
-    mapping(uint256 => uint256) private _positionPerStickerId; // tokenId => position
-    mapping(address => mapping(uint256 => bool)) private _positionStatePerAddress; // owner => (position => state)
-    mapping(address => uint256) private _positionCountPerAddress; // ownder => filledPositionsCount
+    // id => (owner => balance)
+    mapping (uint256 => mapping(address => uint256)) private _balances;
 
+    // owner => (id => balance)
+    mapping (address => mapping(uint256 => uint256)) private _iBalances;
+
+    mapping (address => uint256) _albumBalances;
+
+    string public albumName;
+    uint256 public albumSize;
     string public baseStickerURI;
     string public albumURI;
 
-    uint256 public constant MAX_SUPPLY = 1000; // max amount of stickers that will be ever emmited
     uint256 public constant PRICE = 0.001 ether; // price to mint a sticker
     uint256 public constant ALBUM_PRICE = 0.01 ether; // price to mint an album
     uint256 public constant MAX_PER_MINT = 5; // max amount of stickers that can be minted in a single transaction
-    uint256 private constant ALBUM_CODE = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff; // special placeholder in _positionPerStickerId that represents an album
-
-    constructor(string memory _name, string memory _symbol, string memory _baseStickerURI, string memory _albumURI, uint256 _size) 
-    ERC721(_name, _symbol) {
+    
+    constructor(string memory _albumName, uint256 _albumSize, string memory _baseStickerURI, string memory _albumURI) {
+        albumName = _albumName;
+        albumSize = _albumSize;
         baseStickerURI = _baseStickerURI;
         albumURI = _albumURI;
-        _albumSize = _size;
-    }
-
-    function getAlbumSize() external view returns (uint256) {
-        return _albumSize;
     }
 
     function mintStickers(uint256 _count) external payable {
-        uint256 totalMinted = _tokenIds.current();
-        require(totalMinted.add(_count) <= MAX_SUPPLY, "Album max supply reached");
-        require(_count > 0 && _count <= MAX_PER_MINT, "Invalid count");
-        require(msg.value >= PRICE.mul(_count), "Not enough ETH");
+        require(_count > 0 && _count <= MAX_PER_MINT, "Invalid amount");
+        require(msg.value >= PRICE * _count, "Not enough ETH");
 
         for (uint256 i = 0; i < _count; i++) {
-            _mintSticker();
+            uint256 id = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, i))) % albumSize;
+            _balances[id][msg.sender]++;
+            _iBalances[msg.sender][id]++;
         }
     }
 
     // TODO: for test purposes, remove later
-    function testMintSticker(uint256 _position) external payable {
-        _testMintSticker(_position);
+    function testMintSticker(uint256 _id) external payable {
+        _balances[_id][msg.sender]++;
+        _iBalances[msg.sender][_id]++;
+    }
+
+    function stickerBalances(address _owner) external view returns (uint256[] memory) {
+        uint256[] memory ownedBalances = new uint256[](albumSize);
+        for (uint256 i = 0; i < albumSize; i++) {
+            ownedBalances[i] = _iBalances[_owner][i];
+        }
+
+        return ownedBalances;
     }
 
     // TODO: burn all stickers
     function mintAlbum() external payable {
         require(msg.value >= ALBUM_PRICE, "Not enough ETH");
-        require(_positionCountPerAddress[msg.sender] >= _albumSize, "Album is not full");
 
-        uint256 id = _mintNFT();
-        _positionPerStickerId[id] = ALBUM_CODE;
+        uint256 uniqueStickers;
+        for (uint256 i = 0; i < albumSize; i++) {
+            if (_balances[i][msg.sender]>0){
+                uniqueStickers++;
+            }
+        }
+        require(uniqueStickers >= albumSize, "Album is not full");
+
+        // burn all stickers
+        for (uint256 i = 0; i < albumSize; i++) {
+            _balances[i][msg.sender]--;
+            _iBalances[msg.sender][i]--;
+        }
+        
+        // mint album
+        _albumBalances[msg.sender]++;
     }
 
-    function getStickers(address _owner) external view returns (uint256[] memory) {
-        uint256 tokenCount = balanceOf(_owner);
-        uint256[] memory tokensId = new uint256[](tokenCount);
+    function albumBalance(address _owner) external view returns (uint256) {
+        return _albumBalances[_owner];
+    }
 
-        for (uint256 i = 0; i < tokenCount; i++) {
-            tokensId[i] = tokenOfOwnerByIndex(_owner, i);
-        }
-        return tokensId;
+    function stickerURI(uint256 _id) public view returns (string memory) {
+        require(_id < albumSize, "Invalid sticker ID");
+        return string(abi.encodePacked(baseStickerURI, _id.toString()));
     }
 
     function withdraw() external payable onlyOwner {
@@ -79,48 +94,5 @@ contract NonFungibleAlbum is ERC721Enumerable, Ownable {
         require(balance > 0, "No ether left to withdraw");
 
         payable(msg.sender).transfer(balance);
-    }
-
-    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
-        require(_exists(_tokenId), "Invalid Token ID");
-
-        uint256 position = _positionPerStickerId[_tokenId];
-        if (position != ALBUM_CODE) { // it's a sticker
-            string memory baseURI = _baseURI();
-            return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, position.toString())) : "";
-        }
-
-        // it's an album
-        return albumURI;
-    }
-
-    function _mintSticker() private {
-        uint256 id = _mintNFT();
-        uint256 position = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, id))) % _albumSize;
-        _positionPerStickerId[id] = position;
-        if (_positionStatePerAddress[msg.sender][position] == false) {
-            _positionStatePerAddress[msg.sender][position] = true;
-            _positionCountPerAddress[msg.sender]++;
-        }
-    }
-
-    function _testMintSticker(uint256 _position) private {
-        uint256 id = _mintNFT();
-        _positionPerStickerId[id] = _position;
-        if (_positionStatePerAddress[msg.sender][_position] == false) {
-            _positionStatePerAddress[msg.sender][_position] = true;
-            _positionCountPerAddress[msg.sender]++;
-        }
-    }
-
-    function _mintNFT() private returns (uint256) {
-        uint256 newTokenID = _tokenIds.current();
-        _safeMint(msg.sender, newTokenID);
-        _tokenIds.increment();
-        return newTokenID;
-    }
-
-    function _baseURI() internal view override returns (string memory) {
-        return baseStickerURI;
     }
 }
