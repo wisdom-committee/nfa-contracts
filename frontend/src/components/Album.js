@@ -1,12 +1,8 @@
 import { Card, List } from "antd";
 
 const Album = ({ size, stickers }) => {
-  console.log("stickers", stickers)
-
   const cards = Array.from({ length: size }, (_, id) => {
     const current = stickers[id]
-
-    console.log(current)
 
     return ({
       id: current.id,
@@ -14,8 +10,6 @@ const Album = ({ size, stickers }) => {
       balance: current.balance,
     })
   })
-
-  console.log(cards)
 
   return (
     <List

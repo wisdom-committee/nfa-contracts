@@ -14,38 +14,16 @@ const NonFungibleAlbumService = {
         return await contract.methods.size().call();
     },
 
+    // stickers are not returned in order!
     getStickers: async function (account) {
         const stickerBalances = await contract.methods.stickerBalances(account).call();
-        
+
         const stickers = [];
-        for (let stickerId = 0; stickerId < stickerBalances.length; stickerId++) {
-            try {
-                // TODO: extract to more methods
-                let stickerURI = await contract.methods.uri(stickerId).call();
-                stickerURI = stickerURI.replace("{id}", stickerId);
-                console.log("stickerURI:", stickerURI);
-
-                const ipfsHash = stickerURI.replace("ipfs://", "");
-                console.log("ipfsHash:", ipfsHash);
-
-                const jsonManifestBuffer = await getFromIPFS(ipfsHash);
-                console.log("jsonManifestBuffer", jsonManifestBuffer);
-
-                const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
-                console.log("jsonManifest", jsonManifest);
-
-                stickers.push({
-                    id: stickerId,
-                    uri: stickerURI,
-                    balance: parseInt(stickerBalances[stickerId]),
-                    ...jsonManifest
-                });
-            } catch (e) {
-                console.log(e);
-            }
+        for (const [stickerId, stickerBalance] of stickerBalances.entries()) {
+            stickers.push(parseSticker(stickerId, stickerBalance));
         };
 
-        return stickers;
+        return await Promise.all(stickers);
     },
 
     mintStickers: async function (account, count) {
@@ -92,5 +70,25 @@ const getFromIPFS = async hashToGet => {
         return content;
     }
 };
+
+const parseSticker = async (stickerId, stickerBalance) => {
+    try {
+        let stickerURI = await contract.methods.uri(stickerId)
+            .call()
+        stickerURI = stickerURI.replace("{id}", stickerId);
+        const ipfsHash = stickerURI.replace("ipfs://", "");
+        const jsonManifestBuffer = await getFromIPFS(ipfsHash);
+        const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
+
+        return {
+            id: stickerId,
+            uri: stickerURI,
+            balance: parseInt(stickerBalance),
+            ...jsonManifest
+        };
+    } catch (e) {
+        console.log(e);
+    }
+}
 
 export default NonFungibleAlbumService;
