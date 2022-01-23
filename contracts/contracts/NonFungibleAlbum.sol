@@ -2,34 +2,24 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
-//TODO: use safemath
-contract NonFungibleAlbum is Ownable {
-    using Strings for uint256;
-
-    // id => (owner => balance)
-    mapping (uint256 => mapping(address => uint256)) private _balances;
-
-    // owner => (id => balance)
-    mapping (address => mapping(uint256 => uint256)) private _iBalances;
-
-    mapping (address => uint256) _albumBalances;
-
-    string public albumName;
-    uint256 public albumSize;
-    string public baseStickerURI;
-    string public albumURI;
+contract NonFungibleAlbum is ERC1155, Ownable {
+    string public name;
+    uint256 public size;
 
     uint256 public constant PRICE = 0.001 ether; // price to mint a sticker
     uint256 public constant ALBUM_PRICE = 0.01 ether; // price to mint an album
     uint256 public constant MAX_PER_MINT = 5; // max amount of stickers that can be minted in a single transaction
-    
-    constructor(string memory _albumName, uint256 _albumSize, string memory _baseStickerURI, string memory _albumURI) {
-        albumName = _albumName;
-        albumSize = _albumSize;
-        baseStickerURI = _baseStickerURI;
-        albumURI = _albumURI;
+    uint256 public constant ALBUM_ID = 0xfff;
+
+    constructor(
+        string memory _name,
+        uint256 _size,
+        string memory _uri
+    ) ERC1155(_uri) {
+        name = _name;
+        size = _size;
     }
 
     function mintStickers(uint256 _count) external payable {
@@ -37,56 +27,52 @@ contract NonFungibleAlbum is Ownable {
         require(msg.value >= PRICE * _count, "Not enough ETH");
 
         for (uint256 i = 0; i < _count; i++) {
-            uint256 id = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, i))) % albumSize;
-            _balances[id][msg.sender]++;
-            _iBalances[msg.sender][id]++;
+            bytes memory rng = abi.encodePacked(block.timestamp, msg.sender, i);
+            uint256 id = uint256(keccak256(rng)) % size;
+            _mint(msg.sender, id, 1, "");
         }
     }
 
     // TODO: for test purposes, remove later
     function testMintSticker(uint256 _id) external payable {
-        _balances[_id][msg.sender]++;
-        _iBalances[msg.sender][_id]++;
+        _mint(msg.sender, _id, 1, "");
     }
 
-    function stickerBalances(address _owner) external view returns (uint256[] memory) {
-        uint256[] memory ownedBalances = new uint256[](albumSize);
-        for (uint256 i = 0; i < albumSize; i++) {
-            ownedBalances[i] = _iBalances[_owner][i];
+    function stickerBalances(address _owner)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        uint256[] memory ownedBalances = new uint256[](size);
+        for (uint256 i = 0; i < size; i++) {
+            ownedBalances[i] = balanceOf(_owner, i);
         }
 
         return ownedBalances;
     }
 
-    // TODO: burn all stickers
     function mintAlbum() external payable {
         require(msg.value >= ALBUM_PRICE, "Not enough ETH");
 
         uint256 uniqueStickers;
-        for (uint256 i = 0; i < albumSize; i++) {
-            if (_balances[i][msg.sender]>0){
+        for (uint256 i = 0; i < size; i++) {
+            if (balanceOf(msg.sender, i) > 0) {
                 uniqueStickers++;
             }
         }
-        require(uniqueStickers >= albumSize, "Album is not full");
+        require(uniqueStickers >= size, "Album is not full");
 
-        // burn all stickers
-        for (uint256 i = 0; i < albumSize; i++) {
-            _balances[i][msg.sender]--;
-            _iBalances[msg.sender][i]--;
+        // burn all stickers used to complete the album
+        for (uint256 i = 0; i < size; i++) {
+            _burn(msg.sender, i, 1);
         }
-        
+
         // mint album
-        _albumBalances[msg.sender]++;
+        _mint(msg.sender, ALBUM_ID, 1, "");
     }
 
     function albumBalance(address _owner) external view returns (uint256) {
-        return _albumBalances[_owner];
-    }
-
-    function stickerURI(uint256 _id) public view returns (string memory) {
-        require(_id < albumSize, "Invalid sticker ID");
-        return string(abi.encodePacked(baseStickerURI, _id.toString()));
+        return balanceOf(_owner, ALBUM_ID);
     }
 
     function withdraw() external payable onlyOwner {
