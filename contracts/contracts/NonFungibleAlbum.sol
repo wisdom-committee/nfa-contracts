@@ -33,7 +33,7 @@ contract NonFungibleAlbum is Ownable {
     }
 
     function mintStickers(uint256 _count) external payable {
-        require(_count > 0 && _count <= MAX_PER_MINT, "Invalid count");
+        require(_count > 0 && _count <= MAX_PER_MINT, "Invalid amount");
         require(msg.value >= PRICE * _count, "Not enough ETH");
 
         for (uint256 i = 0; i < _count; i++) {

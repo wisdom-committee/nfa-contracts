@@ -29,22 +29,37 @@ describe("NonFungibleAlbum contract", async function () {
             expect(response).to.be.equal(albumSize);
         });
 
-        it("Mints stickers", async function () {
-            response = contract.mintStickers(5, { value: utils.parseEther('0.005') });
-            await expect(response).to.be.not.reverted;
-        });
-
-        it("Gets stickers", async function () {
-            await contract.mintStickers(5, { value: utils.parseEther('0.005') });
-
-            response = await contract.stickersBalance(owner.address);
-            expect(response).to.be.an('array').of.length(albumSize);
-            expect(totalBalance(response)).to.be.equal(5);
-        });
-
         it("Gets sticker URI", async function () {
             response = await contract.stickerURI(0);
             expect(response).to.contain(baseStickerURI);
+        });
+
+        it("Gets album URI", async function () {
+            response = await contract.albumURI();
+            expect(response).to.be.equal(albumURI);
+        });
+
+        describe("Minting stickers", async function () {
+
+            it("Fails to mint sticker when not enough ETH is paid", async function () {
+                response = contract.mintStickers(1, { value: utils.parseEther('0.0009') });
+                e = "Not enough ETH";
+                await expect(response).to.be.revertedWith(e);
+            });
+
+            it("Fails to mint stickers when amount exceeds limit", async function () {
+                response = contract.mintStickers(6, { value: utils.parseEther('0.006') });
+                e = "Invalid amount";
+                await expect(response).to.be.revertedWith(e);
+            });
+
+            it("Mints stickers", async function () {
+                await contract.mintStickers(5, { value: utils.parseEther('0.005') });
+
+                response = await contract.stickersBalance(owner.address);
+                expect(response).to.be.an('array').of.length(albumSize);
+                expect(totalBalance(response)).to.be.equal(5);
+            });
         });
 
         describe("Minting albums", async function () {
@@ -78,11 +93,6 @@ describe("NonFungibleAlbum contract", async function () {
                 expect(response).to.be.an('array').of.length(albumSize);
                 expect(totalBalance(response)).to.be.equal(0);
             });
-
-            it("Gets album URI", async function () {
-                response = contract.albumURI();
-                expect(response).to.be.equal(albumURI);
-            })
         });
     });
 });
