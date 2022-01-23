@@ -1,29 +1,19 @@
 import { Card, List } from "antd";
 
 const Album = ({ size, stickers }) => {
-  console.log(stickers)
+  console.log("stickers", stickers)
 
-  const cards = Array.from({length: size}, (_, index) => {
-    const position = index + 1
-    const current = stickers.find(i => i.position === position)
-  
+  const cards = Array.from({ length: size }, (_, id) => {
+    const current = stickers[id]
+
     console.log(current)
 
-    if (current) {
-      return ({
-        position,
-        image: current.image
-      })
-    }
-
     return ({
-      position,
-      name: 'unknown',
-      description: 'n/a',
-      image: './emptyCard.jpg'
+      id,
+      image: current.balance > 0 ? current.image : './emptyCard.jpg',
+      balance: current.balance,
     })
   })
-
 
   console.log(cards)
 
@@ -40,13 +30,12 @@ const Album = ({ size, stickers }) => {
       }}
       dataSource={cards}
       renderItem={item => {
-        const id = item.position;
         return (
-          <List.Item key={id}>
+          <List.Item key={item.id}>
             <Card
               title={
                 <div>
-                  <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.name}
+                  <span style={{ fontSize: 16, marginRight: 8 }}>Bored Ape #{item.id} ({item.balance})</span>
                 </div>
               }
             >

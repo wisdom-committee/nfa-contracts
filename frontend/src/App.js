@@ -16,6 +16,7 @@ class App extends React.Component {
     message: "",
     countToBuy: 1,
     myStickers: [],
+    stickersCount: 0,
     albumSize: 0,
     idToBuy: 0,
   };
@@ -31,9 +32,11 @@ class App extends React.Component {
     const albumSize = await contract.methods.size().call();
 
     const myStickers = [];
+    let stickersCount = 0;
     for (let stickerId = 0; stickerId < stickerBalances.length; stickerId++) {
 
-      if (stickerBalances[stickerId] <= 0) continue;
+      const stickerBalance = parseInt(stickerBalances[stickerId]);
+      stickersCount += stickerBalance;
 
       try {
         let stickerURI = await contract.methods.uri(stickerId).call();
@@ -55,7 +58,7 @@ class App extends React.Component {
             id: stickerId,
             uri: stickerURI,
             owner: accounts[0],
-            position: stickerId,
+            balance: stickerBalance,
             ...jsonManifest
           });
         } catch (e) {
@@ -66,7 +69,7 @@ class App extends React.Component {
       }
     };
 
-    this.setState({ myStickers, albumSize })
+    this.setState({ myStickers, stickersCount, albumSize })
   }
 
   // mint stickers
@@ -147,9 +150,9 @@ class App extends React.Component {
   render() {
     return (
       <div>
-        <h1>Stickers Contract</h1>
+        <h1>Non-fungible Albums</h1>
         <form onSubmit={this.handleBuy}>
-          <label>Buy the following amount of stickers: </label>
+          <label>Buy stickers (up to 5): </label>
           <input
             value={this.state.countToBuy}
             onChange={(event) => {
@@ -160,7 +163,7 @@ class App extends React.Component {
         </form>
 
         <form onSubmit={this.handleBuyById}>
-          <label>Buy an specific stickers: </label>
+          <label>[Test] Buy sticker with ID: </label>
           <input
             value={this.state.idToBuy}
             onChange={(event) => {
@@ -171,11 +174,16 @@ class App extends React.Component {
         </form>
 
         <form onSubmit={this.handleClaimAlbum}>
-          <label>Claim the completed album: </label>
+          <label>Claim album! </label>
           <button>Claim</button>
         </form>
 
-        <h1>My stickers (album size: {this.state.albumSize})</h1>
+        <p></p>
+        <ul>
+          <li>Album size: {this.state.albumSize}</li>
+          <li>Stickers owned: {this.state.stickersCount}</li>
+        </ul>
+
         <h2>{this.state.message}</h2>
         <Album size={this.state.albumSize} stickers={this.state.myStickers} />
       </div >
