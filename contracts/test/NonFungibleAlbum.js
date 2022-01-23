@@ -6,11 +6,12 @@ describe("NonFungibleAlbum contract", async function () {
     const name = "Bored Apes Album";
     const size = 10;
     const uri = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/{id}";
+    const albumId = 99;
 
     beforeEach(async function () {
         [owner] = await hre.ethers.getSigners();
         contractFactory = await hre.ethers.getContractFactory("NonFungibleAlbum");
-        contract = await contractFactory.deploy(name, size, uri);
+        contract = await contractFactory.deploy(name, size, uri, albumId);
     });
 
     describe("Deployment", async function () {

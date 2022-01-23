@@ -7,21 +7,25 @@ main()
     process.exit(1);
   });
 
-async function main() {
-  // Config: Bored apes stickers
-  const name = "Bored Apes Album";
-  const size = 10;
-  const uri = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/{id}";
+const album = {
+  name: "Bored Apes Album",
+  size: 10,
+  uri: "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/{id}",
+  id: 99
+};
 
-  // Deploy
+async function main() {
+  let { contract, owner } = await deploy();
+  await smokeTests(contract, owner);
+}
+
+async function deploy() {
   const [owner] = await hre.ethers.getSigners();
   const contractFactory = await hre.ethers.getContractFactory("NonFungibleAlbum");
-  const contract = await contractFactory.deploy(name, size, uri);
+  const contract = await contractFactory.deploy(album.name, album.size, album.uri, album.id);
   await contract.deployed();
   console.log("Contract deployed to:", contract.address);
-
-  // Smoke tests
-  await smokeTests(contract, owner);
+  return { contract, owner };
 }
 
 async function smokeTests(contract, owner) {

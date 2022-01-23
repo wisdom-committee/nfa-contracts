@@ -7,19 +7,21 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 contract NonFungibleAlbum is ERC1155, Ownable {
     string public name;
     uint256 public size;
+    uint256 public albumId;
 
     uint256 public constant PRICE = 0.001 ether; // price to mint a sticker
     uint256 public constant ALBUM_PRICE = 0.01 ether; // price to mint an album
     uint256 public constant MAX_PER_MINT = 5; // max amount of stickers that can be minted in a single transaction
-    uint256 public constant ALBUM_ID = 0xfff;
 
     constructor(
         string memory _name,
         uint256 _size,
-        string memory _uri
+        string memory _uri,
+        uint256 _albumId
     ) ERC1155(_uri) {
         name = _name;
         size = _size;
+        albumId = _albumId;
     }
 
     function mintStickers(uint256 _count) external payable {
@@ -53,26 +55,14 @@ contract NonFungibleAlbum is ERC1155, Ownable {
 
     function mintAlbum() external payable {
         require(msg.value >= ALBUM_PRICE, "Not enough ETH");
+        require(_hasFullAlbum(msg.sender), "Album is not full");
 
-        uint256 uniqueStickers;
-        for (uint256 i = 0; i < size; i++) {
-            if (balanceOf(msg.sender, i) > 0) {
-                uniqueStickers++;
-            }
-        }
-        require(uniqueStickers >= size, "Album is not full");
-
-        // burn all stickers used to complete the album
-        for (uint256 i = 0; i < size; i++) {
-            _burn(msg.sender, i, 1);
-        }
-
-        // mint album
-        _mint(msg.sender, ALBUM_ID, 1, "");
+        _burnFullAlbumStickers();
+        _mint(msg.sender, albumId, 1, "");
     }
 
     function albumBalance(address _owner) external view returns (uint256) {
-        return balanceOf(_owner, ALBUM_ID);
+        return balanceOf(_owner, albumId);
     }
 
     function withdraw() external payable onlyOwner {
@@ -80,5 +70,21 @@ contract NonFungibleAlbum is ERC1155, Ownable {
         require(balance > 0, "No ether left to withdraw");
 
         payable(msg.sender).transfer(balance);
+    }
+
+    function _hasFullAlbum(address _owner) private view returns (bool) {
+        uint256 uniqueStickers;
+        for (uint256 i = 0; i < size; i++) {
+            if (balanceOf(_owner, i) > 0) {
+                uniqueStickers++;
+            }
+        }
+        return uniqueStickers >= size;
+    }
+
+    function _burnFullAlbumStickers() private {
+        for (uint256 i = 0; i < size; i++) {
+            _burn(msg.sender, i, 1);
+        }
     }
 }
