@@ -9,7 +9,7 @@ const Album = ({ size, stickers }) => {
     console.log(current)
 
     return ({
-      id,
+      id: current.id,
       image: current.balance > 0 ? current.image : './emptyCard.jpg',
       balance: current.balance,
     })
@@ -40,7 +40,7 @@ const Album = ({ size, stickers }) => {
               }
             >
               <div>
-                <img src={item.image.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')} style={{ maxWidth: 150 }} />
+                <img src={item.image.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')} style={{ maxWidth: 150 }} alt="" />
               </div>
               <div>{item.description}</div>
             </Card>

@@ -1,15 +1,7 @@
-import React from "react";
 import web3 from "./web3";
-import contract from "./contracts/NonFungibleAlbum";
+import React from "react";
 import { Album } from "./components/Album"
-
-const STICKER_FEE = 0.001
-const ALBUM_FEE = 0.01
-
-const { BufferList } = require("bl");
-// https://www.npmjs.com/package/ipfs-http-client
-const ipfsAPI = require("ipfs-http-client");
-const ipfs = ipfsAPI({ host: "ipfs.infura.io", port: "5001", protocol: "https" });
+import NonFungibleAlbumService from "./services/NonFungibleAlbumService";
 
 class App extends React.Component {
   state = {
@@ -22,108 +14,49 @@ class App extends React.Component {
   };
 
   async componentDidMount() {
-    this.fetchMyStickers();
+    this.reloadAlbum();
   }
 
-  async fetchMyStickers() {
+  async reloadAlbum() {
     const accounts = await web3.eth.getAccounts();
-
-    const stickerBalances = await contract.methods.stickerBalances(accounts[0]).call();
-    const albumSize = await contract.methods.size().call();
-
-    const myStickers = [];
+    const myStickers = await NonFungibleAlbumService.getStickers(accounts[0]);
+    
     let stickersCount = 0;
-    for (let stickerId = 0; stickerId < stickerBalances.length; stickerId++) {
+    for (const sticker of myStickers) {
+      stickersCount += parseInt(sticker.balance);
+    }
 
-      const stickerBalance = parseInt(stickerBalances[stickerId]);
-      stickersCount += stickerBalance;
+    const albumSize = myStickers.length;
 
-      try {
-        let stickerURI = await contract.methods.uri(stickerId).call();
-        stickerURI = stickerURI.replace("{id}", stickerId);
-        console.log("stickerURI:", stickerURI);
-
-        const ipfsHash = stickerURI.replace("ipfs://", "");
-        console.log("ipfsHash:", ipfsHash);
-
-        const jsonManifestBuffer = await getFromIPFS(ipfsHash);
-        console.log("jsonManifestBuffer", jsonManifestBuffer);
-
-        try {
-          const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
-          console.log("jsonManifest", jsonManifest);
-
-          //TODO: refactor with id+balance
-          myStickers.push({
-            id: stickerId,
-            uri: stickerURI,
-            owner: accounts[0],
-            balance: stickerBalance,
-            ...jsonManifest
-          });
-        } catch (e) {
-          console.log(e);
-        }
-      } catch (e) {
-        console.log(e);
-      }
-    };
-
-    this.setState({ myStickers, stickersCount, albumSize })
+    this.setState({ myStickers, stickersCount, albumSize });
   }
 
-  // mint stickers
-  handleBuy = async (event) => {
+  handleBuyStickers = async (event) => {
     event.preventDefault();
 
     let countToBuy = this.state.countToBuy;
-    countToBuy = Number.parseFloat(countToBuy);
-    if (!(Number.isInteger(countToBuy) && countToBuy > 0)) {
-      this.setState({ message: 'You must pass a positive integer' });
-      return;
-    }
-    if (!(Number.isInteger(countToBuy) && countToBuy <= 5)) {
-      this.setState({ message: "You can't buy more than 5 stickers" });
-      return;
-    }
-
+    countToBuy = Number.parseInt(countToBuy);
     const accounts = await web3.eth.getAccounts();
-
     this.setState({ message: "Waiting on transaction success..." });
-
     try {
-      await contract.methods.mintStickers(countToBuy).send({
-        from: accounts[0],
-        value: web3.utils.toWei(String(countToBuy * STICKER_FEE), "ether")
-      });
+      await NonFungibleAlbumService.mintStickers(accounts[0], countToBuy);
       this.setState({ message: "You have minted " + countToBuy + " new sticker(s)" });
-      await this.fetchMyStickers();
+      await this.reloadAlbum();
     } catch (e) {
       this.setState({ message: `Transaction fail or rejected. ${e ? 'Message: ' + e.toString() : ''}` });
     }
   }
 
-  handleBuyById = async (event) => {
+  handleBuyStickerById = async (event) => {
     event.preventDefault();
 
     const idToBuy = Number.parseInt(this.state.idToBuy);
-
-    if (!(Number.isInteger(idToBuy) && idToBuy > 0)) {
-      this.setState({ message: 'You must pass a positive integer' });
-      return;
-    }
-
     const accounts = await web3.eth.getAccounts();
-
     this.setState({ message: "Waiting on transaction success..." });
-
     try {
-      await contract.methods.testMintSticker(idToBuy).send({
-        from: accounts[0],
-        value: web3.utils.toWei(String(STICKER_FEE), "ether")
-      });
+      await NonFungibleAlbumService.mintStickerById(accounts[0], idToBuy);
       this.setState({ message: "You have minted 1 new sticker" });
-      return this.fetchMyStickers();
+      return this.reloadAlbum();
     } catch (e) {
       this.setState({ message: `Transaction fail or rejected. ${e ? 'Message: ' + e.toString() : ''}` });
     }
@@ -133,15 +66,11 @@ class App extends React.Component {
     event.preventDefault();
 
     const accounts = await web3.eth.getAccounts();
-
     this.setState({ message: "Waiting on transaction success..." });
 
     try {
-      await contract.methods.mintAlbum().send({
-        from: accounts[0],
-        value: web3.utils.toWei(String(ALBUM_FEE), "ether")
-      });
-      this.setState({ message: "You have minted the Album" });
+      await NonFungibleAlbumService.mintAlbum(accounts[0]);
+      this.setState({ message: "You have minted the Album!" });
     } catch (e) {
       this.setState({ message: `Transaction fail or rejected. ${e ? 'Message: ' + e.toString() : ''}` });
     }
@@ -151,7 +80,7 @@ class App extends React.Component {
     return (
       <div>
         <h1>Non-fungible Albums</h1>
-        <form onSubmit={this.handleBuy}>
+        <form onSubmit={this.handleBuyStickers}>
           <label>Buy stickers (up to 5): </label>
           <input
             value={this.state.countToBuy}
@@ -162,7 +91,7 @@ class App extends React.Component {
           <button>Buy</button>
         </form>
 
-        <form onSubmit={this.handleBuyById}>
+        <form onSubmit={this.handleBuyStickerById}>
           <label>[Test] Buy sticker with ID: </label>
           <input
             value={this.state.idToBuy}
@@ -190,20 +119,5 @@ class App extends React.Component {
     );
   }
 }
-
-// helper function to "Get" from IPFS
-// you usually go content.toString() after this...
-const getFromIPFS = async hashToGet => {
-  for await (const file of ipfs.get(hashToGet)) {
-    console.log(file.path);
-    if (!file.content) continue;
-    const content = new BufferList();
-    for await (const chunk of file.content) {
-      content.append(chunk);
-    }
-    console.log(content);
-    return content;
-  }
-};
 
 export default App;
