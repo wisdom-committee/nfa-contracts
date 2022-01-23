@@ -28,7 +28,7 @@ class App extends React.Component {
     const accounts = await web3.eth.getAccounts();
 
     const stickerBalances = await contract.methods.stickerBalances(accounts[0]).call();
-    const albumSize = await contract.methods.albumSize().call();
+    const albumSize = await contract.methods.size().call();
 
     const myStickers = [];
     for (let stickerId = 0; stickerId < stickerBalances.length; stickerId++) {
@@ -36,7 +36,7 @@ class App extends React.Component {
       if (stickerBalances[stickerId] <= 0) continue;
 
       try {
-        const stickerURI = await contract.methods.uri(stickerId).call();
+        let stickerURI = await contract.methods.uri(stickerId).call();
         stickerURI = stickerURI.replace("{id}", stickerId);
         console.log("stickerURI:", stickerURI);
 
@@ -94,7 +94,7 @@ class App extends React.Component {
         value: web3.utils.toWei(String(countToBuy * STICKER_FEE), "ether")
       });
       this.setState({ message: "You have minted " + countToBuy + " new sticker(s)" });
-      await this.fetchMyStickers();>
+      await this.fetchMyStickers();
     } catch (e) {
       this.setState({ message: `Transaction fail or rejected. ${e ? 'Message: ' + e.toString() : ''}` });
     }
