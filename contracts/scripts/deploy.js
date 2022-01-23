@@ -9,15 +9,14 @@ main()
 
 async function main() {
   // Config: Bored apes stickers
-  const albumName = "Bored Apes Stickers"
-  const albumSize = 10
-  const baseStickerURI = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/";
-  const albumURI = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/99999"
+  const name = "Bored Apes Album";
+  const size = 10;
+  const uri = "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/{id}";
 
   // Deploy
   const [owner] = await hre.ethers.getSigners();
   const contractFactory = await hre.ethers.getContractFactory("NonFungibleAlbum");
-  const contract = await contractFactory.deploy(albumName, albumSize, baseStickerURI, albumURI);
+  const contract = await contractFactory.deploy(name, size, uri);
   await contract.deployed();
   console.log("Contract deployed to:", contract.address);
 
