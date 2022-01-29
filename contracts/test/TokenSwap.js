@@ -47,7 +47,7 @@ describe("TokenSwap contract", async function () {
 
                 await tsContract.list(nfaContract.address, 1, 2, { value: utils.parseEther('0.001') });
 
-                response = await tsContract.listings();
+                response = await tsContract.activeListings();
                 expect(response).to.be.an('array').of.length(1);
                 expect(response[0].tokenIdWanted).to.be.equal(2);
             });
@@ -98,8 +98,8 @@ describe("TokenSwap contract", async function () {
                 await tsContract.list(nfaContract.address, 1, 2, { value: utils.parseEther('0.001') });
                 await tsContract.connect(addr1).swap(0, { value: utils.parseEther('0.001') });
 
-                //response = await tsContract.listings();
-                //expect(response).to.be.an('array').of.length(0);
+                response = await tsContract.activeListings();
+                expect(response).to.be.an('array').of.length(0);
 
                 response = await nfaContract.stickerBalances(owner.address);
                 expect(totalBalance(response)).to.be.equal(1);

@@ -29,27 +29,34 @@ contract TokenSwap is Ownable {
     but this could very well work with tokens from different contracts 
     */
     struct Listing {
+        uint256 id;
+        bool isActive;
         address tokenContract;
         uint256 tokenIdOffered;
         uint256 tokenIdWanted;
         address publisher;
     }
 
-    function listings() public view returns (Listing[] memory) {
+    function activeListings() external view returns (Listing[] memory) {
         uint256 listingsSize = _listingIdCounter.current();
 
-        Listing[] memory allListings = new Listing[](listingsSize);
+        Listing[] memory listings = new Listing[](_activeListingsCount());
+        uint256 a = 0;
         for (uint256 i = 0; i < listingsSize; i++) {
-            allListings[i] = _listingIdToListing[i];
+            Listing memory listing = _listingIdToListing[i];
+            if (listing.isActive) {
+                listings[a] = listing;
+                a++;
+            }
         }
-        return allListings;
+        return listings;
     }
 
     function list(
         address _tokenContract,
         uint256 _tokenIdOffered,
         uint256 _tokenIdWanted
-    ) public payable {
+    ) external payable {
         require(
             _weAreApproved(_tokenContract, msg.sender),
             "Approval to transfer your tokens has to be given to this contract"
@@ -58,6 +65,8 @@ contract TokenSwap is Ownable {
 
         uint256 listingId = _listingIdCounter.current();
         _listingIdToListing[listingId] = Listing(
+            listingId,
+            true,
             _tokenContract,
             _tokenIdOffered,
             _tokenIdWanted,
@@ -66,8 +75,8 @@ contract TokenSwap is Ownable {
         _listingIdCounter.increment();
     }
 
-    function swap(uint256 _listingId) public payable {
-        Listing memory listing = _listingIdToListing[_listingId];
+    function swap(uint256 _listingId) external payable {
+        Listing storage listing = _listingIdToListing[_listingId];
         require(listing.tokenContract != address(0), "Invalid listingId");
         require(
             _weAreApproved(listing.tokenContract, msg.sender),
@@ -91,7 +100,7 @@ contract TokenSwap is Ownable {
             ""
         );
 
-        delete _listingIdToListing[_listingId];
+        listing.isActive = false;
     }
 
     function _weAreApproved(address _contract, address _owner)
@@ -100,5 +109,18 @@ contract TokenSwap is Ownable {
         returns (bool)
     {
         return ERC1155(_contract).isApprovedForAll(_owner, address(this));
+    }
+
+    function _activeListingsCount() private view returns (uint256) {
+        uint256 listingsSize = _listingIdCounter.current();
+
+        uint256 count = 0;
+        for (uint256 i = 0; i < listingsSize; i++) {
+            Listing memory listing = _listingIdToListing[i];
+            if (listing.isActive) {
+                count++;
+            }
+        }
+        return count;
     }
 }
