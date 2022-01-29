@@ -10,10 +10,13 @@ TODO:
 - Allow to swap multiple tokens
 - Allow to list tokens accepting any other token (could be represented as tokenId==0)
   - `offer` function, so publisher has to accept/decline the swap
+  - `accept(offerId)`
 - Allow tokens from different contracts
 - Emit events
 - Expiration time on listings?
 - Reentrancy lock on swap
+- Unlist
+- list: require contract is ERC1155
 */
 contract TokenSwap is Ownable {
     using Counters for Counters.Counter;
