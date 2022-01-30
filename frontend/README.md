@@ -1,4 +1,21 @@
 # non-fungible-albums frontend
+## Setup
+
+VS code setup
+
+pluggins
+
+- standardjs
+- eslint
+
+settings
+
+```
+{
+  "javascript.validate.enable": false,
+  "standard.autoFixOnSave": true
+}
+```
 
 ## Setup
 
