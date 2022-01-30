@@ -1,18 +1,9 @@
-import { Card, List } from "antd";
+import { Card, List } from 'antd'
 
-const Album = ({ size, stickers }) => {
-  const cards = Array.from({ length: size }, (_, id) => {
-    const current = stickers[id]
-
-    return ({
-      id: current.id,
-      image: current.balance > 0 ? current.image : './emptyCard.jpg',
-      balance: current.balance,
-    })
-  })
-
+const StickerList = ({ stickers, transactionHash }) => {
   return (
     <List
+      header={`Last transaction hash ${transactionHash}`}
       grid={{
         gutter: 16,
         xs: 1,
@@ -20,9 +11,9 @@ const Album = ({ size, stickers }) => {
         md: 4,
         lg: 4,
         xl: 6,
-        xxl: 3,
+        xxl: 3
       }}
-      dataSource={cards}
+      dataSource={stickers}
       renderItem={item => {
         return (
           <List.Item key={item.id}>
@@ -34,14 +25,14 @@ const Album = ({ size, stickers }) => {
               }
             >
               <div>
-                <img src={item.image.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')} style={{ maxWidth: 150 }} alt="" />
+                <img src={item.image.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')} style={{ maxWidth: 150 }} alt='' />
               </div>
               <div>{item.description}</div>
             </Card>
           </List.Item>
-        );
+        )
       }}
     />
-  );
+  )
 }
-export { Album }
+export { StickerList }
