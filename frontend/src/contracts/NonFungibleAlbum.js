@@ -1,7 +1,7 @@
 import web3 from '../web3';
 
 // Mumbai deploy currently in use
-const address = '0x668aCC38fBa268247b2cA4780BC624fB1eEc1b31';
+const address = '0x4B99148b2E02d966A68E6d31D2fd010DaBb6BD85';
 
 const abi = [
   {

@@ -7,56 +7,7 @@ const { BufferList } = require("bl");
 
 const STICKER_FEE = 0.001
 const ALBUM_FEE = 0.01
-
-const NonFungibleAlbumService = {
-
-    getAlbumSize: async function () {
-        return await contract.methods.size().call();
-    },
-
-    // stickers are not returned in order!
-    getStickers: async function (account) {
-        const stickerBalances = await contract.methods.stickerBalances(account).call();
-
-        const stickers = [];
-        for (const [stickerId, stickerBalance] of stickerBalances.entries()) {
-            stickers.push(parseSticker(stickerId, stickerBalance));
-        };
-
-        return await Promise.all(stickers);
-    },
-
-    mintStickers: async function (account, count) {
-        if (!Number.isInteger(count) || count < 1 || count > 5)
-            throw new Error("Only 1 to 5 stickers can be minted in the same transaction");
-
-        return await contract.methods.mintStickers(count)
-            .send({
-                from: account,
-                value: web3.utils.toWei(String(count * STICKER_FEE), "ether")
-            });
-    },
-
-    mintStickerById: async function (account, id) {
-        if (!Number.isInteger(id) || id < 0) {
-            throw new Error("Sticker ID is invalid")
-        }
-
-        return await contract.methods.testMintSticker(id)
-            .send({
-                from: account,
-                value: web3.utils.toWei(String(STICKER_FEE), "ether")
-            });
-    },
-
-    mintAlbum: async function (account) {
-        return await contract.methods.mintAlbum()
-            .send({
-                from: account,
-                value: web3.utils.toWei(String(ALBUM_FEE), "ether")
-            });
-    },
-};
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 const getFromIPFS = async hashToGet => {
     for await (const file of ipfs.get(hashToGet)) {
@@ -90,5 +41,81 @@ const parseSticker = async (stickerId, stickerBalance) => {
         console.log(e);
     }
 }
+
+const NonFungibleAlbumService = {
+
+    subscribeMintStickers: async cb => {
+        const addresses = await web3.eth.getAccounts();
+        const operator = addresses[0];
+        const filter = {
+            filter: {
+                operator,
+                from: ZERO_ADDRESS,
+                to: operator,
+            }
+        }
+
+        contract.events.TransferSingle(filter)
+            .on('data', function(event) {
+                const {
+                    transactionHash,
+                    returnValues: {
+                        id,
+                        value,
+                    },
+                } = event;
+                cb({ id, value: Number(value), transactionHash })
+            })
+            .on('error', console.error);
+    },
+
+    getAlbumSize: async function () {
+        return await contract.methods.size().call();
+    },
+
+    // stickers are not returned in order!
+    getStickers: async function (account) {
+        const stickerBalances = await contract.methods.stickerBalances(account).call();
+        const stickers = [];
+        for (const [stickerId, stickerBalance] of stickerBalances.entries()) {
+            stickers.push(parseSticker(stickerId, stickerBalance));
+        };
+
+        return await Promise.all(stickers);
+    },
+
+    mintStickers: async function (account, count) {
+        if (!Number.isInteger(count) || count < 1 || count > 5)
+            throw new Error("Only 1 to 5 stickers can be minted in the same transaction");
+
+        await contract.methods.mintStickers(count)
+            .send({
+                from: account,
+                value: web3.utils.toWei(String(count * STICKER_FEE), "ether")
+            });
+    },
+
+    mintStickerById: async function (account, id) {
+        if (!Number.isInteger(id) || id < 0) {
+            throw new Error("Sticker ID is invalid")
+        }
+
+        return await contract.methods.testMintSticker(id)
+            .send({
+                from: account,
+                value: web3.utils.toWei(String(STICKER_FEE), "ether")
+            });
+    },
+
+    mintAlbum: async function (account) {
+        return await contract.methods.mintAlbum()
+            .send({
+                from: account,
+                value: web3.utils.toWei(String(ALBUM_FEE), "ether")
+            });
+    },
+
+    parseSticker
+};
 
 export default NonFungibleAlbumService;
